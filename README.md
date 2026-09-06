@@ -21,3 +21,17 @@ This repository houses the infrastructure, documentation, and agent implementati
    uv sync
    source .venv/bin/activate
    ```
+
+## Agent Orchestration & Protocol Mapping
+
+CineAgent acts as the primary orchestrator between user intent, UCP commerce discovery, and AP2 payment execution.
+
+| Tool | Action Description | Protocol Layer |
+| :--- | :--- | :--- |
+| `discover_theaters` | Discovers theater merchants and capabilities | UCP (`/.well-known/ucp`) |
+| `search_movies` | Aggregates and queries catalogs across vendors | MCP (JSON-RPC) |
+| `get_movie_detail` | Retrieves showtimes and seat availability | MCP (JSON-RPC) |
+| `create_checkout` | Initializes transaction session at target merchant | MCP (JSON-RPC) |
+| `complete_purchase` | Signs AP2 Mandate and authorizes transaction (HITL Required) | AP2 + MCP |
+
+> **Security Gate:** `complete_purchase` is wrapped with `FunctionTool(..., require_confirmation=True)` enforcing human approval before cryptographic mandate signing and fund transfer.
