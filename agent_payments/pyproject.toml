@@ -1,0 +1,14 @@
+[project]
+name = "agent-payments-demo"
+version = "0.1.0"
+description = "CineAgent booking agent using UCP and AP2"
+requires-python = ">=3.11"
+dependencies = [
+    "google-adk>=1.29.0",
+    "google-genai>=1.27.0",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.34.0",
+    "httpx>=0.28.0",
+    "ap2 @ git+https://github.com/google-agentic-commerce/AP2.git@main",
+    "ucp-sdk @ git+https://github.com/Universal-Commerce-Protocol/python-sdk.git@main",
+]
