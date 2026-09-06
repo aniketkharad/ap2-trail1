@@ -41,3 +41,12 @@ CineAgent acts as the primary orchestrator between user intent, UCP commerce dis
 1. **Merchant Introspection:** `discover_theaters` queries `GET /.well-known/ucp` on each target host to resolve capabilities, endpoint paths, and supported payment handlers.
 2. **Catalog Aggregation:** `search_movies` issues JSON-RPC `search_catalog` calls across all registered merchants, merging multiple pricing and showtime variants into a unified product entity.
 3. **Detail Resolution:** `get_movie_detail` issues a localized `lookup_catalog` query targeting a single merchant's catalog for seat layouts and availability.
+
+### AP2 Dual-Mandate Security Lifecycle
+
+[Block Diagram]
+
+1. **`CartMandate` (Merchant-to-Agent):** Cryptographically binds line items and total pricing. Prevents mid-transaction price drift or tampering.
+2. **Human Authorization (HITL):** Agent triggers confirmation before proceeding to cryptographic signing.
+3. **`PaymentMandate` (Agent/User-to-Merchant):** Proves user intent and authorizes fund deduction specifically against the verified `CartMandate`.
+4. **Final Settlement:** Merchant MCP endpoint validates both signatures before ticket emission.

@@ -74,12 +74,59 @@ async def get_movie_detail(movie_id: str, merchant_url: str) -> str:
     return json.dumps(result, indent=2)
 
 
-# Stubs to satisfy agent.py imports until subsequent steps implement them
-async def create_checkout(*args, **kwargs) -> str:
-    """Stub: Initialize checkout session."""
-    raise NotImplementedError("Checkout flow not implemented yet.")
+async def create_checkout(
+    merchant_url: str, showtime_id: str, quantity: int = 1
+) -> str:
+    """Create a checkout session for tickets at a theater."""
+    result = await _ucp.mcp_call(
+        merchant_url,
+        "create_checkout",
+        {
+            "checkout": {
+                "line_items": [
+                    {"item": {"id": showtime_id}, "quantity": quantity}
+                ],
+                "context": {"country": "US", "currency": "USD"},
+            }
+        },
+    )
+    return json.dumps(result, indent=2)
 
 
-async def complete_purchase(*args, **kwargs) -> str:
-    """Stub: Authorize and complete payment via AP2."""
-    raise NotImplementedError("AP2 mandate completion not implemented yet.")
+async def complete_purchase(
+    checkout_id: str, merchant_url: str, payment_method: str = "card"
+) -> str:
+    """Complete purchase with AP2 payment authorization."""
+    # 1. Retrieve CartMandate from active checkout session
+    checkout = await _ucp.mcp_call(
+        merchant_url, "get_checkout", {"checkout": {"id": checkout_id}}
+    )
+    cart_mandate = _ap2.process_cart_mandate(checkout)
+    if not cart_mandate:
+        return json.dumps({"error": "No cart mandate — checkout may have expired"})
+
+    # 2. Create and sign PaymentMandate
+    # In production, triggers user biometric/device auth via AP2 Wallet SDK.
+    payment_mandate = _ap2.create_payment_mandate(cart_mandate, payment_method)
+
+    # 3. Post dual mandates to merchant MCP endpoint to finalize purchase
+    clean_port = merchant_url.rstrip("/").split(":")[-1]
+    result = await _ucp.mcp_call(
+        merchant_url,
+        "complete_checkout",
+        {
+            "checkout": {
+                "id": checkout_id,
+                "payment": {
+                    "instruments": [
+                        {
+                            "handler_id": f"card_{clean_port}",
+                            "type": "card",
+                        }
+                    ],
+                },
+                "ap2": {"payment_mandate": payment_mandate},
+            }
+        },
+    )
+    return json.dumps(result, indent=2)
