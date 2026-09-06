@@ -35,3 +35,9 @@ CineAgent acts as the primary orchestrator between user intent, UCP commerce dis
 | `complete_purchase` | Signs AP2 Mandate and authorizes transaction (HITL Required) | AP2 + MCP |
 
 > **Security Gate:** `complete_purchase` is wrapped with `FunctionTool(..., require_confirmation=True)` enforcing human approval before cryptographic mandate signing and fund transfer.
+
+### Catalog Discovery Protocol Flow
+
+1. **Merchant Introspection:** `discover_theaters` queries `GET /.well-known/ucp` on each target host to resolve capabilities, endpoint paths, and supported payment handlers.
+2. **Catalog Aggregation:** `search_movies` issues JSON-RPC `search_catalog` calls across all registered merchants, merging multiple pricing and showtime variants into a unified product entity.
+3. **Detail Resolution:** `get_movie_detail` issues a localized `lookup_catalog` query targeting a single merchant's catalog for seat layouts and availability.
